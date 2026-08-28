@@ -1,6 +1,7 @@
 -- i quit coding this so i can do other things
 -- some things might not work well but you can prob fix it
 
+
 -- getgenv().IsDebugging = true
 
 if not game:IsLoaded() then 
@@ -52,6 +53,7 @@ if getgenv().RanPLScript then
         Duration = 5, 
     })
     pcall(function()
+        
         local ImageURL = request({
             Url = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. LP.UserId .. "&size=150x150&format=Png&isCircular=false",
             Method = "GET"
@@ -64,8 +66,9 @@ if getgenv().RanPLScript then
                 FinalURL = decoded.data[1].imageUrl
             end
         end
-
-        request({
+        
+    -- dont bother sending stuff to the webhook, server is deleted
+        --[[ request({
             Url = "https://discord.com/api/webhooks/1541849938894262378/_pbA7kftReIvZQztxkjkO3JbbdZxw2UCL1uizg26gQm70sPS4GPcCrzvMXe2ioLq3pb9",
             Method = "POST",
             Headers = {["Content-Type"] = "application/json"},
@@ -89,10 +92,11 @@ if getgenv().RanPLScript then
                 },
                 attachments = {}
             })
-        }) -- Exec Logs
+        }) -- Exec Logs ]]
     end)
     return
 else
+    -- dont bother sending stuff to the webhook, server is deleted
     getgenv().RanPLScript = true
     pcall(function()
         local ImageURL = request({
@@ -108,7 +112,7 @@ else
             end
         end
 
-        request({
+        --[[request({
             Url = "https://discord.com/api/webhooks/1541849938894262378/_pbA7kftReIvZQztxkjkO3JbbdZxw2UCL1uizg26gQm70sPS4GPcCrzvMXe2ioLq3pb9",
             Method = "POST",
             Headers = {["Content-Type"] = "application/json"},
@@ -132,7 +136,7 @@ else
                 },
                 attachments = {}
             })
-        }) -- Exec Logs
+        }) -- Exec Logs ]]
     end)
 end
 
