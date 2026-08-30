@@ -1,5 +1,4 @@
--- i quit coding this so i can do other things
--- some things might not work well but you can prob fix it
+-- update is:  1 upd / century
 
 
 -- getgenv().IsDebugging = true
@@ -53,7 +52,6 @@ if getgenv().RanPLScript then
         Duration = 5, 
     })
     pcall(function()
-        
         local ImageURL = request({
             Url = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. LP.UserId .. "&size=150x150&format=Png&isCircular=false",
             Method = "GET"
@@ -66,9 +64,8 @@ if getgenv().RanPLScript then
                 FinalURL = decoded.data[1].imageUrl
             end
         end
-        
-    -- dont bother sending stuff to the webhook, server is deleted
-        --[[ request({
+
+        request({
             Url = "https://discord.com/api/webhooks/1541849938894262378/_pbA7kftReIvZQztxkjkO3JbbdZxw2UCL1uizg26gQm70sPS4GPcCrzvMXe2ioLq3pb9",
             Method = "POST",
             Headers = {["Content-Type"] = "application/json"},
@@ -92,11 +89,10 @@ if getgenv().RanPLScript then
                 },
                 attachments = {}
             })
-        }) -- Exec Logs ]]
+        }) -- Exec Logs
     end)
     return
 else
-    -- dont bother sending stuff to the webhook, server is deleted
     getgenv().RanPLScript = true
     pcall(function()
         local ImageURL = request({
@@ -112,7 +108,7 @@ else
             end
         end
 
-        --[[request({
+        request({
             Url = "https://discord.com/api/webhooks/1541849938894262378/_pbA7kftReIvZQztxkjkO3JbbdZxw2UCL1uizg26gQm70sPS4GPcCrzvMXe2ioLq3pb9",
             Method = "POST",
             Headers = {["Content-Type"] = "application/json"},
@@ -136,7 +132,7 @@ else
                 },
                 attachments = {}
             })
-        }) -- Exec Logs ]]
+        }) -- Exec Logs
     end)
 end
 
@@ -399,6 +395,10 @@ local TimeOfDayData = {
 local ClientsideData = {
     SelectedPlayer = nil,
     ViewingPlayer = nil
+}
+
+local BackflipData = {
+    Enabled = false,
 }
 
 
@@ -1946,6 +1946,18 @@ LPSection:Toggle({
     Default = Enum.KeyCode.None,
     Mode = "Toggle",
     Callback = function(Value) LPData.PlayerFly = Value end
+})
+LPSection:Toggle({
+    Name = "Backflip",
+    Desc = "Does a backflip when you jump",
+    Flag = "BackflipEnabled",
+    Default = false,
+    Callback = function(Value) BackflipData.Enabled = Value end
+}):Keybind({
+    Flag = "BackflipKeybind",
+    Default = Enum.KeyCode.None,
+    Mode = "Toggle",
+    Callback = function(Value) BackflipData.Enabled = Value end
 })
 
 
@@ -3684,6 +3696,92 @@ end)
 
 
 
+
+local isFlipping = false
+local backflipConnection = nil
+
+local function getExpectedJumpTime(hum)
+    local v0 = hum.JumpPower
+    local g = workspace.Gravity
+    if g <= 0 then return math.huge end
+    return ((2 * v0) / g) - 0.05
+end
+
+local function doBackflip()
+    if isFlipping then return end
+    if not BackflipData.Enabled then return end
+    if not IsLPAlive() then return end
+
+    local char = LP.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+
+    local totalAirTime = getExpectedJumpTime(hum)
+    if totalAirTime == math.huge or totalAirTime <= 0 then return end
+
+    isFlipping = true
+
+    local bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyGyro.P = 1000000
+    bodyGyro.D = 500
+    bodyGyro.CFrame = hrp.CFrame
+    bodyGyro.Parent = hrp
+
+    local startCFrame = hrp.CFrame
+    local totalRotation = math.rad(360)
+    local elapsed = 0
+
+    
+
+    backflipConnection = RunService.Heartbeat:Connect(function(dt)
+        if not char.Parent or not hrp.Parent or not bodyGyro.Parent then
+            if backflipConnection then backflipConnection:Disconnect() end
+            isFlipping = false
+            return
+        end
+        hum.AutoRotate = false
+
+        elapsed = elapsed + dt
+
+        if elapsed >= totalAirTime then
+            if backflipConnection then backflipConnection:Disconnect() end
+            bodyGyro:Destroy()
+            isFlipping = false
+            hum.AutoRotate = true
+            return
+        end
+
+        local alpha = elapsed / totalAirTime
+        local currentAngle = totalRotation * alpha
+        bodyGyro.CFrame = startCFrame * CFrame.Angles(-currentAngle, 0, 0)
+    end)
+end
+
+local function SetupBackflip(char)
+    if backflipConnection then
+        backflipConnection:Disconnect()
+        backflipConnection = nil
+    end
+    isFlipping = false
+
+    if not char then return end
+    local hum = char:WaitForChild("Humanoid", 10)
+    if not hum then return end
+
+    hum.Jumping:Connect(function(active)
+        if active then
+            doBackflip()
+        end
+    end)
+end
+
+LP.CharacterAdded:Connect(SetupBackflip)
+if LP.Character then
+    SetupBackflip(LP.Character)
+end
 
 IsLoading = false
 Library:Notification("Script loaded!", "Script loaded in " .. tostring(string.format("%.1f", tick() - LoadingStartTime))  .. "seconds.", 5)
