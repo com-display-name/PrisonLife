@@ -1,5 +1,3 @@
--- update is:  1 upd / century
-
 
 -- getgenv().IsDebugging = true
 
@@ -283,7 +281,9 @@ local LPData = {
     ToolHiderDistance = 100,
     OldTHDistance = 0,
     AntiFlingKick = true,
-    Fling = false
+    Fling = false,
+    JumpHeightEnabled = false,
+    JumpHeight = 7.2
 }
 
 local GunGiverData = {
@@ -1803,6 +1803,22 @@ LPSection:Toggle({
     Flag = "LPInfiniteJump",
     Default = false,
     Callback = function(Value) LPData.InfiniteJump = Value end
+})
+LPSection:Slider({
+    Name = "Jump Height",
+    Flag = "LPJumpHeight",
+    Min = 0,
+    Suffix = "",
+    Max = 100,
+    Default = 7.2,
+    Decimals = 0.1,
+    Callback = function(Value) LPData.JumpHeight = Value end
+})
+LPSection:Toggle({
+    Name = "Jump Height Enabled",
+    Flag = "LPJumpHeightEnabled",
+    Default = false,
+    Callback = function(Value) LPData.JumpHeightEnabled = Value end
 })
 LPSection:Slider({
     Name = "Speed",
@@ -3357,6 +3373,12 @@ RunService.RenderStepped:Connect(function()
             Library:Notification("AntiAC", "Dont go too high.", 5)
             LP.Character.HumanoidRootPart.CFrame = CFrame.new(LP.Character.HumanoidRootPart.CFrame.Position.X, 170, LP.Character.HumanoidRootPart.CFrame.Position.Z)
         end
+        if LP.Character.HumanoidRootPart.AssemblyLinearVelocity.Magnitude > 100 then
+            LP.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+        end
+        if LP.Character.HumanoidRootPart.AssemblyAngularVelocity.Magnitude > 100 then
+            LP.Character.HumanoidRootPart.AssemblyAngularVelocity = Vector3.zero
+        end
     end
 
 end)
@@ -3389,6 +3411,12 @@ RunService.Stepped:Connect(function()
 
     if LPData.SpeedEnabled and not LPData.PlayerFly and (not IsLPInVehicle()) and hum.MoveDirection.Magnitude > 0 then
         hrp.CFrame = hrp.CFrame + (hum.MoveDirection * LPData.Speed / 200)
+    end
+
+    if LPData.JumpHeightEnabled then
+        hum.JumpHeight = LPData.JumpHeight
+    else
+        hum.JumpHeight = 7.2
     end
 
     if LPData.SpinBot then
